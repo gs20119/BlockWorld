@@ -7,15 +7,17 @@ import java.util.Random;
 public class Env {
 	private int[] Board, Mv;
 	private int[][] mvIdx;
-	private int size=4, cap=16;
-	private int time=0, score=0;
-	private static int Max=10, genMax=3;
+	private int size=4, cap=16, Max=10;
+	private int time=0, score=0, Advntge=0;
+	private static int genMax=3;
+	private static double pa, pb, pc;
 	private static String[] Actions = {"LEFT", "UP", "RIGHT", "DOWN"};
 	Random rand = new Random();
 	
-	public Env(int size) { 
+	public Env(int size, int maxBlock) { 
 		this.size=size; 
 		this.cap=size*size;
+		this.Max=maxBlock;
 		Board = new int[this.cap];
 		Mv = new int[this.cap];
 		mvIdx = new int[this.size][];
@@ -58,15 +60,15 @@ public class Env {
 		Board[Line.get(Randi)] = Randv;
 	}
 	
-	public int Move(int act) { 
-		Mv = new int[cap];
+	public void Move(int act, int show) { 
+		Mv = new int[cap]; Advntge=0;
 		for(int j=0; j<size; j++) {
 			int top=0, topv=0; 
 			for(int i=0; i<size; i++) {
 				int here = mvIdx[act][i+j*size];
 				if(Board[here]==0) continue;
 				if(topv==Board[here]) { 
-					Mv[here]=i-top; score+=topv; if(topv<Max) topv++; 
+					Mv[here]=i-top; score+=topv; Advntge+=topv; if(topv<Max) topv++; 
 					Board[mvIdx[act][top+j*size]]=topv; 
 					top++; topv=0; Board[here]=0;
 				}else { 
@@ -75,15 +77,32 @@ public class Env {
 				}
 			}Board[mvIdx[act][top+j*size]]=topv;
 			
-		}for(int i=0; i<cap; i++) {
-			if(Mv[i]!=0) break;
-			if(i==cap-1) return -1; // Invalid Move
-		}
-		System.out.println("Selected : " + Actions[act]);
+		}System.out.println("Selected : " + Actions[act]);
 		Generate(); time++;
-		Show(); ShowUI(); return 0;
+		if(show!=0) { Show(); ShowUI(); } 
+	}
+	
+	public int Terminal() {
+		for(int i=0; i<cap; i++) if(Board[i]==0) return 0;
+		for(int i=0; i<cap-size; i++) if(Board[i]==Board[i+4]) return 0;
+		for(int i=0; i<cap-1; i++) if(Board[i]==Board[i+1] && (i+1)%size!=0) return 0;
+		return 1;
 	}
 	
 	public int[] getState() { return Board; }
+	
+	public double[] getHotVec() {
+		double[] oneHot = new double[1+cap*Max];
+		for(int i=0; i<cap; i++)
+			for(int j=1; j<=Max; j++) if(Board[i]==j) oneHot[Max*i+j]=1;
+		return oneHot;
+	}
+	
+	public double getReward() {
+		double mvPenalty=0, remainBlank=0;
+		for(int i=0; i<cap; i++) if(Board[i]==0) remainBlank++;
+		for(int i=0; i<cap; i++) mvPenalty += Mv[i];
+		return Advntge*pa + remainBlank*pb + mvPenalty*pc;
+	}
 	
 }
