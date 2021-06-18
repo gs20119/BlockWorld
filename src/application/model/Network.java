@@ -14,6 +14,11 @@ public abstract class Network {
 		return x;
 	}
 	
+	public void copy(Network NN) {
+		for(int i=0; i<=NN.depth; i++)
+			layers[i].copy(NN.layers[i]);
+	}
+	
 	public double getLoss(double[] pred, double[] targ) { return J.getLoss(pred, targ); }
 	
 	public void backward(double[] pred, double[] targ) {
@@ -48,8 +53,21 @@ class QRNet extends Network {
 		layers[2] = new FullConnect(64,64);
 		layers[3] = new FullConnect(64,action_size*num_support);
 		for(int i=0; i<3; i++) activs[i] = new ReLU();
-		J = new QRLoss();
+		J = new QuantHuberLoss(num_support);
 	}
+	
+	public double backward(double[] pred, double[] targ, int action) { 
+		J.getLoss(pred, targ); // pred, targ = Z(S,A)
+		double[] dJdx_a = J.backward();
+		double[] dJdx = new double[1+action_size*num_support];
+		for(int i=1; i<=num_support; i++) dJdx[i+num_support*action]=dJdx_a[i];
+		dJdx = layers[depth].backward(dJdx);
+		for(int i=depth-1; i>=0; i--) {
+			dJdx = activs[i].backward(dJdx);
+			dJdx = layers[i].backward(dJdx);
+		}return J.getLoss(pred, targ);
+	}
+	
 	
 }
 

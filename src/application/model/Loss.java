@@ -25,18 +25,41 @@ class MSELoss extends Loss{
 	
 }
 
-class QRLoss extends Loss{
+class QuantHuberLoss extends Loss{
 
-	@Override
-	public double getLoss(double[] pred, double[] targ) {
+	int N; double[][] ErrorMatrix;
+	double[] Quantiles;
+	public QuantHuberLoss(int num_supports) { 
+		N = num_supports;
+		ErrorMatrix = new double[N+1][N+1];
+		Quantiles = new double[N+1];
+		for(int i=1; i<=N; i++) Quantiles[i]=(i/N)-1/(2*N);
+	}
+	
+	private double HuberLoss(double x) {
+		if(Math.abs(x)>1) return Math.abs(x)-0.5;
+		else return 0.5*Math.pow(x,2);
+	}
+	
+	public double getLoss(double[] pred, double[] targ) { // Error of Z(s,a) = N Supports
 		Pred = pred.clone(); Targ = targ.clone();
-		return 0;
+		double Loss = 0;
+		for(int i=1; i<=N; i++)
+			for(int j=1; j<=N; j++) {
+				ErrorMatrix[i][j] = Targ[j]-Pred[i];
+				Loss += HuberLoss(ErrorMatrix[i][j])*Quantiles[i];
+		}return Loss/N;
 	}
 
 	@Override
 	public double[] backward() {
-		// TODO Auto-generated method stub
-		return null;
+		double[] dJdP = new double[N+1];
+		for(int i=1; i<=N; i++)
+			for(int j=1; j<=N; j++) {
+				if(Math.abs(ErrorMatrix[i][j])>1) dJdP[i] += ((Pred[i]>Targ[j])?1:-1)*Quantiles[i];
+				else dJdP[i] += (Pred[i]-Targ[j])*Quantiles[i];
+		}for(int i=1; i<=N; i++) dJdP[i] /= N;
+		return dJdP;
 	}
 	
 }

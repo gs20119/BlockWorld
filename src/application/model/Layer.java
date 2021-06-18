@@ -6,7 +6,8 @@ public abstract class Layer extends Function {
 		double dValue = Math.random();
 		double r = 0.3; // sqrt(12/(in+out))
 		return dValue*2*r - r;
-	}public abstract void optimize(int K); 
+	}public abstract void copy(Layer L);
+	public abstract void optimize(int K); 
 }
 
 class Weight {
@@ -18,7 +19,7 @@ class Weight {
 
 class Adam {
 	public static double b1=0.9, b2=0.999;
-	public static double alpha=Math.pow(10,-4), eps=Math.pow(10,-8);
+	public static double alpha=Math.pow(10,-4), eps=Math.pow(10,-6);
 	public double b1n, b2n;
 	public void timeplus() { b1n *= b1; b2n *= b2; }
 	public Adam() { b1n = 1; b2n = 1; }
@@ -52,6 +53,13 @@ class FullConnect extends Layer{
 	}
 	
 	@Override
+	public void copy(Layer L) {
+		FullConnect FC = (FullConnect)L;
+		for(int i=0; i<=In; i++)
+			for(int j=1; j<=Out; j++) W[i][j] = new Weight(FC.W[i][j].w);
+	}
+	
+	@Override
 	public double[] forward(double[] x) {
 		X = x.clone();
 		double[] y = new double[Out+1]; y[0]=1; // bias
@@ -79,6 +87,7 @@ class FullConnect extends Layer{
 				W[i][j] = adam.update(W[i][j]);
 		}
 	}
+
 	
 }
 
@@ -99,6 +108,12 @@ class BatchNormal extends Layer{
 
 	@Override
 	public void optimize(int K) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
+	public void copy(Layer L) {
 		// TODO Auto-generated method stub
 		
 	}
