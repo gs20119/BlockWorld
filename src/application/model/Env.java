@@ -7,10 +7,10 @@ import java.util.Random;
 public class Env {
 	private int[] Board, Mv;
 	private int[][] mvIdx;
-	private int size=4, cap=16, Max=10;
+	private int size=4, cap=16, Max=2;
 	private int time=0, score=0, Advntge=0;
 	private static int genMax=3;
-	private static double pa, pb, pc;
+	private static double pa=1, pb=0, pc=-0.5;
 	private static String[] Actions = {"LEFT", "UP", "RIGHT", "DOWN"};
 	Random rand = new Random();
 	
@@ -20,8 +20,8 @@ public class Env {
 		this.Max=maxBlock;
 		Board = new int[this.cap];
 		Mv = new int[this.cap];
-		mvIdx = new int[this.size][];
-		for(int i=0; i<this.size; i++) mvIdx[i] = new int[this.cap];
+		mvIdx = new int[4][];
+		for(int i=0; i<4; i++) mvIdx[i] = new int[this.cap];
 		for(int j=0; j<this.cap; j++) mvIdx[0][j] = j; // left
 		for(int j=0; j<this.cap; j++) mvIdx[1][j] = size*(j%size) + ((int)j/size); // up
 		for(int j=0; j<this.cap; j++) mvIdx[2][j] = j + (size-1) - 2*(j%size); // right
@@ -31,19 +31,19 @@ public class Env {
 	public void Init() {
 		time=0; score=0; 
 		System.out.println("-Game Starts-");
-		Generate(); Show();
+		Generate(); 
 	}
 	
 	public void Show() {
 		System.out.println("---- " + time + " ----");
 		for(int i=0; i<size; i++) {
-			for(int j=0; j<size; j++) System.out.print(Board[4*i+j]+" ");
+			for(int j=0; j<size; j++) System.out.print(Board[size*i+j]+" ");
 			System.out.println("");
 		}
 	}
 	
 	public void Reset() {
-		System.out.println("Game Over : " + score);
+		System.out.println("Game Over : score - " + score +", time - " + time);
 		Mv = new int[cap]; Board = new int[cap];
 		/* JavaFX UI Work Here */
 	}
@@ -56,7 +56,7 @@ public class Env {
 		ArrayList<Integer> Line = new ArrayList<>();
 		for(int i=0; i<cap; i++) if(Board[i]==0) Line.add(i);
 		int Randi = Math.abs(rand.nextInt())%Line.size();
-		int Randv = Math.abs(rand.nextInt())%(genMax-1)+1; // 1에서 genMax
+		int Randv = 1; //Math.abs(rand.nextInt())%(genMax-1)+1; // 1에서 genMax
 		Board[Line.get(Randi)] = Randv;
 	}
 	
@@ -68,7 +68,7 @@ public class Env {
 				int here = mvIdx[act][i+j*size];
 				if(Board[here]==0) continue;
 				if(topv==Board[here]) { 
-					Mv[here]=i-top; score+=topv; Advntge+=topv; if(topv<Max) topv++; 
+					Mv[here]=i-top; Advntge+=topv; if(topv<Max) topv++; 
 					Board[mvIdx[act][top+j*size]]=topv; 
 					top++; topv=0; Board[here]=0;
 				}else { 
@@ -77,14 +77,19 @@ public class Env {
 				}
 			}Board[mvIdx[act][top+j*size]]=topv;
 			
-		}System.out.println("Selected : " + Actions[act]);
-		Generate(); time++;
+		}if(show!=0) System.out.println("Selected : " + Actions[act]); time++;
+		if(subTerminal()==0) Generate(); score += Advntge;
 		if(show!=0) { Show(); ShowUI(); } 
+	}
+	
+	public int subTerminal() {
+		for(int i=0; i<cap; i++) if(Board[i]==0) return 0;
+		return 1;
 	}
 	
 	public int Terminal() {
 		for(int i=0; i<cap; i++) if(Board[i]==0) return 0;
-		for(int i=0; i<cap-size; i++) if(Board[i]==Board[i+4]) return 0;
+		for(int i=0; i<cap-size; i++) if(Board[i]==Board[i+size]) return 0;
 		for(int i=0; i<cap-1; i++) if(Board[i]==Board[i+1] && (i+1)%size!=0) return 0;
 		return 1;
 	}
@@ -99,10 +104,11 @@ public class Env {
 	}
 	
 	public double getReward() {
-		double mvPenalty=0, remainBlank=0;
-		for(int i=0; i<cap; i++) if(Board[i]==0) remainBlank++;
+		double mvPenalty=0, stageScore=0;
+		for(int i=0; i<cap; i++) stageScore += Board[i];
 		for(int i=0; i<cap; i++) mvPenalty += Mv[i];
-		return Advntge*pa + remainBlank*pb + mvPenalty*pc;
+		if(mvPenalty==0) mvPenalty += 50; // it means invalid movement
+		return Advntge*pa + stageScore*pb + mvPenalty*pc;
 	}
 	
 }
