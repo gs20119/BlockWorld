@@ -65,14 +65,14 @@ public class QRDQN {
 			double[] zPred = NN.forward(pState);
 			int action = findBestAction(zPred); 
 			if(Math.random()<eps) action = Math.abs(rand.nextInt())%actions; // exploration
-			if(time>10000) printQ(zPred);
+			if(time>10) printQ(zPred);
 			
-			env.Move(action,(time>10000)?1:0);
-			if(env.subTerminal()!=0) {
+			env.Move(action,(time>10)?1:0);
+			if(env.notMoved()!=0) {
 				action = Math.abs(rand.nextInt())%actions;
-				env.Move(action,(time>10000)?1:0); } // Added : Blocking Invalid Moves Efficiently
+				env.Move(action,(time>10)?1:0); } // Added : Blocking Invalid Moves Efficiently
 			double[] nState = env.getHotVec();
-			double reward = env.getReward();
+			double reward = env.getReward(); // System.out.println(reward);
 			int dead = env.Terminal();
 			Experience e = new Experience(pState, action, reward, nState, dead);
 			Replay.add(e);
@@ -102,7 +102,7 @@ public class QRDQN {
 			}NN.forward(e.S); // we have to train Z(S,A)
 			meanLoss += NN.backward(zPredi, zTargi, e.A);
 		}NN.optimize(); 
-		//if(env.Terminal()!=0) System.out.println("Average Loss : "+meanLoss/batch_size);
+		if(env.Terminal()!=0) System.out.println("Average Loss : "+meanLoss/batch_size);
 	}
 	
 }

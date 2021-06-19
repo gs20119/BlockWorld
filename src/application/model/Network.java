@@ -47,9 +47,10 @@ class QRNet extends Network {
 		this.state_size = s;
 		this.action_size = a;
 		this.batch_size = b; depth = 3;
-		layers = new Layer[4]; activs = new Activation[3];
+		layers = new Layer[depth+1]; 
+		activs = new Activation[depth];
 		layers[0] = new FullConnect(state_size,64);
-		layers[1] = new FullConnect(64,64);
+		layers[1] = new FullConnect(64,64); 
 		layers[2] = new FullConnect(64,64);
 		layers[3] = new FullConnect(64,action_size*num_support);
 		for(int i=0; i<3; i++) activs[i] = new ReLU();

@@ -47,7 +47,8 @@ class QuantHuberLoss extends Loss{
 		for(int i=1; i<=N; i++)
 			for(int j=1; j<=N; j++) {
 				ErrorMatrix[i][j] = Targ[j]-Pred[i];
-				Loss += HuberLoss(ErrorMatrix[i][j])*Quantiles[i];
+				if(ErrorMatrix[i][j]>0) Loss += HuberLoss(ErrorMatrix[i][j])*Quantiles[i];
+				else Loss += HuberLoss(ErrorMatrix[i][j])*(1-Quantiles[i]);
 		}return Loss/N;
 	}
 
@@ -56,8 +57,9 @@ class QuantHuberLoss extends Loss{
 		double[] dJdP = new double[N+1];
 		for(int i=1; i<=N; i++)
 			for(int j=1; j<=N; j++) {
-				if(Math.abs(ErrorMatrix[i][j])>1) dJdP[i] += ((Pred[i]>Targ[j])?1:-1)*Quantiles[i];
-				else dJdP[i] += (Pred[i]-Targ[j])*Quantiles[i];
+				double E = ErrorMatrix[i][j];
+				if(Math.abs(E)>1) dJdP[i] += ((E>0)?-Quantiles[i]:1-Quantiles[i]);
+				else dJdP[i] += -E*((E>0)?Quantiles[i]:(1-Quantiles[i]));
 		}for(int i=1; i<=N; i++) dJdP[i] /= N;
 		return dJdP;
 	}

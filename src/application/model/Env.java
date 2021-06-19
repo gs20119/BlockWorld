@@ -10,7 +10,7 @@ public class Env {
 	private int size=4, cap=16, Max=15;
 	private int time=0, score=0, Advntge=0, MaxRec=0;
 	private static int genMax=2;
-	private static double pa=1, pb=1, pc=-0.3;
+	private static double pa=1, pb=0.2, pc=-0.2;
 	private static String[] Actions = {"LEFT", "UP", "RIGHT", "DOWN"};
 	Random rand = new Random();
 	
@@ -90,6 +90,11 @@ public class Env {
 		return 1;
 	}
 	
+	public int notMoved() {
+		for(int i=0; i<cap; i++) if(Mv[i]!=0) return 0;
+		return 1;
+	}
+	
 	public int Terminal() {
 		for(int i=0; i<cap; i++) if(Board[i]==0) return 0;
 		for(int i=0; i<cap-size; i++) if(Board[i]==Board[i+size]) return 0;
@@ -111,8 +116,8 @@ public class Env {
 		double mvPenalty=0, stageScore=0;
 		//for(int i=0; i<cap; i++) stageScore += Board[i]; it was a problem
 		for(int i=0; i<cap; i++) if(Board[i]==0) stageScore++; 
-		for(int i=0; i<cap; i++) mvPenalty += Mv[i];
-		if(mvPenalty==0) mvPenalty += 10; // it means invalid movement
+		for(int i=0; i<cap; i++) if(Mv[i]!=0) mvPenalty++;
+		//if(mvPenalty==0) mvPenalty += 10; // it means invalid movement
 		return Advntge*pa + stageScore*pb + mvPenalty*pc;
 	}
 	

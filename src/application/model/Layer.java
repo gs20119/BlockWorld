@@ -4,7 +4,7 @@ public abstract class Layer extends Function {
 	public Adam adam = new Adam();
 	public double He() { 
 		double dValue = Math.random();
-		double r = 0.3; // sqrt(12/(in+out))
+		double r = 0.1; // sqrt(12/(in+out))
 		return dValue*2*r - r;
 	}public abstract void copy(Layer L);
 	public abstract void optimize(int K); 
