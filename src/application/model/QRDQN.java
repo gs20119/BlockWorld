@@ -9,8 +9,8 @@ import java.util.Random;
 class Experience{ // S, A, R, nS
 	double[] S, nS;
 	int A; double R; int d; int sd;
-	public Experience(double[] S, int A, double R, double[] nS, int d, int sd) {
-		this.S = S; this.A = A; this.R = R; this.nS = nS; this.d = d; this.sd = sd;
+	public Experience(double[] S, int A, double R, double[] nS, int d) {
+		this.S = S; this.A = A; this.R = R; this.nS = nS; this.d = d;
 	}
 }
 
@@ -19,12 +19,12 @@ public class QRDQN {
 	Env env;
 	QRNet NN, Target;
 	int size, actions=4, maxBlock=2;
-	int supports=16, batch_size=200;
+	int supports=16, batch_size=500;
 	double invalPenalty = 10;
-	double gam=0.99, eps=0.05, epsDecay=0.9999;
+	double gam=0.99, eps=0.05;
 	Random rand = new Random();
 	ArrayList<Experience> Replay = new ArrayList<Experience>();
-	int capacity = 1000;
+	int capacity = 5000;
 	
 	public QRDQN(int size, int maxBlock) { 
 		this.size = size; this.maxBlock = maxBlock;
@@ -36,9 +36,8 @@ public class QRDQN {
 	public void start(int epochs) {
 		for(int i=0; i<epochs; i++) {
 			Target.copy(NN);
-			if(i%100==0) System.out.println(i);
-			eps *= epsDecay;
-			env.Reset(); env.Init(); epoch();
+			System.out.println(i);
+			env.Reset(); env.Init(); epoch(i);
 		}
 	}
 	
@@ -60,21 +59,22 @@ public class QRDQN {
 		}System.out.println("");
 	}
 	
-	private void epoch() {
+	private void epoch(int time) {
 		while(true) {
 			
 			double[] pState = env.getHotVec();
 			double[] zPred = NN.forward(pState);
 			int action = findBestAction(zPred);
-			if(Math.random()<eps) action = Math.abs(rand.nextInt())%actions;
-			printQ(zPred);
+			if(time>4000) printQ(zPred);
 			
-			env.Move(action,1);
+			env.Move(action,(time>4000)?1:0);
+			if(env.subTerminal()!=0) {
+				action = Math.abs(rand.nextInt())%actions;
+				env.Move(action,(time>4000)?1:0); } // Added : Blocking Invalid Moves Efficiently
 			double[] nState = env.getHotVec();
 			double reward = env.getReward();
 			int dead = env.Terminal();
-			int subDead = env.subTerminal();
-			Experience e = new Experience(pState, action, reward, nState, dead, subDead);
+			Experience e = new Experience(pState, action, reward, nState, dead);
 			Replay.add(e);
 			
 			if(Replay.size() > capacity) Replay.remove(0);			

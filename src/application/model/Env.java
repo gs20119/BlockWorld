@@ -7,10 +7,10 @@ import java.util.Random;
 public class Env {
 	private int[] Board, Mv;
 	private int[][] mvIdx;
-	private int size=4, cap=16, Max=2;
-	private int time=0, score=0, Advntge=0;
-	private static int genMax=3;
-	private static double pa=1, pb=0, pc=-0.5;
+	private int size=4, cap=16, Max=15;
+	private int time=0, score=0, Advntge=0, MaxRec=0;
+	private static int genMax=2;
+	private static double pa=1, pb=1, pc=-0.2;
 	private static String[] Actions = {"LEFT", "UP", "RIGHT", "DOWN"};
 	Random rand = new Random();
 	
@@ -43,7 +43,7 @@ public class Env {
 	}
 	
 	public void Reset() {
-		System.out.println("Game Over : score - " + score +", time - " + time);
+		System.out.println("Game Over : score - " + score +", time - " + time + ", Max - " + MaxRec);
 		Mv = new int[cap]; Board = new int[cap];
 		/* JavaFX UI Work Here */
 	}
@@ -56,7 +56,7 @@ public class Env {
 		ArrayList<Integer> Line = new ArrayList<>();
 		for(int i=0; i<cap; i++) if(Board[i]==0) Line.add(i);
 		int Randi = Math.abs(rand.nextInt())%Line.size();
-		int Randv = 1; //Math.abs(rand.nextInt())%(genMax-1)+1; // 1에서 genMax
+		int Randv = Math.abs(rand.nextInt())%(genMax-1)+1; // 1에서 genMax
 		Board[Line.get(Randi)] = Randv;
 	}
 	
@@ -77,8 +77,9 @@ public class Env {
 				}
 			}Board[mvIdx[act][top+j*size]]=topv;
 			
-		}if(show!=0) System.out.println("Selected : " + Actions[act]); time++;
-		if(subTerminal()==0) Generate(); score += Advntge;
+		}for(int i=0; i<cap; i++) MaxRec = Math.max(MaxRec, Board[i]);
+		if(show!=0) System.out.println("Selected : " + Actions[act]);
+		if(subTerminal()==0) Generate(); score += Advntge; time++;
 		if(show!=0) { Show(); ShowUI(); } 
 	}
 	
@@ -98,6 +99,7 @@ public class Env {
 	
 	public double[] getHotVec() {
 		double[] oneHot = new double[1+cap*Max];
+		oneHot[0]=1;
 		for(int i=0; i<cap; i++)
 			for(int j=1; j<=Max; j++) if(Board[i]==j) oneHot[Max*i+j]=1;
 		return oneHot;
@@ -105,9 +107,10 @@ public class Env {
 	
 	public double getReward() {
 		double mvPenalty=0, stageScore=0;
-		for(int i=0; i<cap; i++) stageScore += Board[i];
+		//for(int i=0; i<cap; i++) stageScore += Board[i]; it was a problem
+		for(int i=0; i<cap; i++) if(Board[i]==0) stageScore++; 
 		for(int i=0; i<cap; i++) mvPenalty += Mv[i];
-		if(mvPenalty==0) mvPenalty += 50; // it means invalid movement
+		if(mvPenalty==0) mvPenalty += 100; // it means invalid movement
 		return Advntge*pa + stageScore*pb + mvPenalty*pc;
 	}
 	
