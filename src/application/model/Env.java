@@ -10,7 +10,7 @@ public class Env {
 	private int size=4, cap=16, Max=15;
 	private int time=0, score=0, Advntge=0, MaxRec=0;
 	private static int genMax=2;
-	private static double pa=1, pb=1, pc=-0.2;
+	private static double pa=1, pb=1, pc=-0.3;
 	private static String[] Actions = {"LEFT", "UP", "RIGHT", "DOWN"};
 	Random rand = new Random();
 	
@@ -30,12 +30,12 @@ public class Env {
 	
 	public void Init() {
 		time=0; score=0; 
-		System.out.println("-Game Starts-");
+		//System.out.println("-Game Starts-");
 		Generate(); 
 	}
 	
 	public void Show() {
-		System.out.println("---- " + time + " ----");
+		//System.out.println("---- " + time + " ----");
 		for(int i=0; i<size; i++) {
 			for(int j=0; j<size; j++) System.out.print(Board[size*i+j]+" ");
 			System.out.println("");
@@ -43,7 +43,9 @@ public class Env {
 	}
 	
 	public void Reset() {
-		System.out.println("Game Over : score - " + score +", time - " + time + ", Max - " + MaxRec);
+		//Show();
+		System.out.println(score);
+		//System.out.println("Game Over : score - " + score +", time - " + time);
 		Mv = new int[cap]; Board = new int[cap];
 		/* JavaFX UI Work Here */
 	}
@@ -110,7 +112,7 @@ public class Env {
 		//for(int i=0; i<cap; i++) stageScore += Board[i]; it was a problem
 		for(int i=0; i<cap; i++) if(Board[i]==0) stageScore++; 
 		for(int i=0; i<cap; i++) mvPenalty += Mv[i];
-		if(mvPenalty==0) mvPenalty += 100; // it means invalid movement
+		if(mvPenalty==0) mvPenalty += 10; // it means invalid movement
 		return Advntge*pa + stageScore*pb + mvPenalty*pc;
 	}
 	

@@ -20,8 +20,7 @@ public class QRDQN {
 	QRNet NN, Target;
 	int size, actions=4, maxBlock=2;
 	int supports=16, batch_size=500;
-	double invalPenalty = 10;
-	double gam=0.99, eps=0.05;
+	double gam=0.99, eps=0.05; // added action noise
 	Random rand = new Random();
 	ArrayList<Experience> Replay = new ArrayList<Experience>();
 	int capacity = 5000;
@@ -36,7 +35,7 @@ public class QRDQN {
 	public void start(int epochs) {
 		for(int i=0; i<epochs; i++) {
 			Target.copy(NN);
-			System.out.println(i);
+			//System.out.println(i);
 			env.Reset(); env.Init(); epoch(i);
 		}
 	}
@@ -46,7 +45,7 @@ public class QRDQN {
 		for(int i=0; i<actions; i++) {
 			double qPred=0;
 			for(int j=1; j<=supports; j++) qPred += zPred[i*supports+j];
-			qPred /= supports;
+			qPred /= supports; 
 			if(qPred > maxQ) { action = i; maxQ = qPred; }
 		}return action;
 	}
@@ -64,13 +63,14 @@ public class QRDQN {
 			
 			double[] pState = env.getHotVec();
 			double[] zPred = NN.forward(pState);
-			int action = findBestAction(zPred);
-			if(time>4000) printQ(zPred);
+			int action = findBestAction(zPred); 
+			if(Math.random()<eps) action = Math.abs(rand.nextInt())%actions; // exploration
+			if(time>10000) printQ(zPred);
 			
-			env.Move(action,(time>4000)?1:0);
+			env.Move(action,(time>10000)?1:0);
 			if(env.subTerminal()!=0) {
 				action = Math.abs(rand.nextInt())%actions;
-				env.Move(action,(time>4000)?1:0); } // Added : Blocking Invalid Moves Efficiently
+				env.Move(action,(time>10000)?1:0); } // Added : Blocking Invalid Moves Efficiently
 			double[] nState = env.getHotVec();
 			double reward = env.getReward();
 			int dead = env.Terminal();
@@ -102,7 +102,7 @@ public class QRDQN {
 			}NN.forward(e.S); // we have to train Z(S,A)
 			meanLoss += NN.backward(zPredi, zTargi, e.A);
 		}NN.optimize(); 
-		System.out.println("Average Loss : "+meanLoss/batch_size);
+		//if(env.Terminal()!=0) System.out.println("Average Loss : "+meanLoss/batch_size);
 	}
 	
 }
