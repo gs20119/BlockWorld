@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.Queue;
 import java.util.Random;
 
+import application.view.GameBoard;
+import javafx.scene.layout.BorderPane;
+
 class Experience{ // S, A, R, nS
 	double[] S, nS;
 	int A; double R; int d; int sd;
@@ -20,14 +23,16 @@ public class QRDQN {
 	QRNet NN, Target;
 	int size, actions=4, maxBlock=2;
 	int supports=16, batch_size=500;
+	BorderPane root; GameBoard gb;
 	double gam=0.99, eps=0.05; // added action noise
 	Random rand = new Random();
 	ArrayList<Experience> Replay = new ArrayList<Experience>();
 	int capacity = 5000;
 	
-	public QRDQN(int size, int maxBlock) { 
+	public QRDQN(int size, int maxBlock, BorderPane root, GameBoard gb) { 
 		this.size = size; this.maxBlock = maxBlock;
-		env = new Env(size, maxBlock);
+		env = new Env(size, maxBlock); 
+		this.root = root; this.gb = gb;
 		NN = new QRNet(size*size*maxBlock, actions, supports, batch_size); 
 		Target = new QRNet(size*size*maxBlock, actions, supports, batch_size);
 	}
@@ -67,10 +72,12 @@ public class QRDQN {
 			if(Math.random()<eps) action = Math.abs(rand.nextInt())%actions; // exploration
 			if(time>10) printQ(zPred);
 			
-			env.Move(action,(time>10)?1:0);
+			env.Move(action,1);
 			if(env.notMoved()!=0) {
 				action = Math.abs(rand.nextInt())%actions;
-				env.Move(action,(time>10)?1:0); } // Added : Blocking Invalid Moves Efficiently
+				env.Move(action,1); } // Added : Blocking Invalid Moves Efficiently
+			gb.setState(env.getState());
+			gb.showGameBoard(root);
 			double[] nState = env.getHotVec();
 			double reward = env.getReward(); // System.out.println(reward);
 			int dead = env.Terminal();

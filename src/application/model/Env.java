@@ -2,6 +2,10 @@ package application.model;
 
 import java.util.ArrayList;
 import java.util.Random;
+
+import application.view.GameBoard;
+import javafx.scene.layout.BorderPane;
+
 import java.util.Random;
 
 public class Env {
@@ -15,9 +19,8 @@ public class Env {
 	Random rand = new Random();
 	
 	public Env(int size, int maxBlock) { 
-		this.size=size; 
-		this.cap=size*size;
-		this.Max=maxBlock;
+		this.size=size; this.cap=size*size;
+		this.Max=maxBlock; 
 		Board = new int[this.cap];
 		Mv = new int[this.cap];
 		mvIdx = new int[4][];
@@ -30,12 +33,12 @@ public class Env {
 	
 	public void Init() {
 		time=0; score=0; 
-		//System.out.println("-Game Starts-");
+		System.out.println("-Game Starts-");
 		Generate(); 
 	}
 	
 	public void Show() {
-		//System.out.println("---- " + time + " ----");
+		System.out.println("---- " + time + " ----");
 		for(int i=0; i<size; i++) {
 			for(int j=0; j<size; j++) System.out.print(Board[size*i+j]+" ");
 			System.out.println("");
@@ -43,15 +46,10 @@ public class Env {
 	}
 	
 	public void Reset() {
-		//Show();
+		Show();
 		System.out.println(score);
-		//System.out.println("Game Over : score - " + score +", time - " + time);
+		System.out.println("Game Over : score - " + score +", time - " + time);
 		Mv = new int[cap]; Board = new int[cap];
-		/* JavaFX UI Work Here */
-	}
-	
-	private void ShowUI() { 
-		/* Get Board and Mv, Show this to UI */
 	}
 	
 	private void Generate() { 
@@ -82,7 +80,7 @@ public class Env {
 		}for(int i=0; i<cap; i++) MaxRec = Math.max(MaxRec, Board[i]);
 		if(show!=0) System.out.println("Selected : " + Actions[act]);
 		if(subTerminal()==0) Generate(); score += Advntge; time++;
-		if(show!=0) { Show(); ShowUI(); } 
+		if(show!=0) Show();  
 	}
 	
 	public int subTerminal() {

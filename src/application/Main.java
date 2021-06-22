@@ -1,5 +1,8 @@
 package application;
 	
+import application.model.Env;
+import application.model.QRDQN;
+import application.view.GameBoard;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
@@ -12,12 +15,13 @@ public class Main extends Application {
 	public void start(Stage primaryStage) {
 		try {
 			
-			BorderPane root = new BorderPane();// (BorderPane)FXMLLoader.load(getClass().getResource("model/Root.fxml"));
+			BorderPane root = new BorderPane(); // (BorderPane)FXMLLoader.load(getClass().getResource("view/Root.fxml"));
 			
 			int [] Board= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,0 };
 			GameBoard gb=new GameBoard(4);
 			
-			gb.printGameBoard(root);
+			gb.setState(Board);
+			gb.showGameBoard(root); // Print Game Board
 			
 			Scene scene = new Scene(root);
 			
@@ -25,8 +29,8 @@ public class Main extends Application {
 			primaryStage.setScene(scene);
 			primaryStage.show();
 			
-			gb.setState(Board);
-			gb.printGameBoard(root);
+			QRDQN Model = new QRDQN(4,15,root,gb);
+			Model.start(2);
 			
 		} catch(Exception e) {
 			e.printStackTrace();
