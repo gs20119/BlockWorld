@@ -35,7 +35,7 @@ public class Root implements Initializable{
 	}
 	
 	public void start() {  disableButtons(true,false,true);
-		Thread thread = new Thread(() -> { 
+		/*Thread thread = new Thread(() -> { 
 			for(int i=0; i<10; i++) {
 				Model.ready();
 				Model.epoch(i);
@@ -47,7 +47,8 @@ public class Root implements Initializable{
 			}
 		});
 		thread.setDaemon(true);
-		thread.start();
+		thread.start();*/
+		Model.start(2);
 	}
 	public void stop() { disableButtons(false,true,false); }
 	public void singleEpoch() { }

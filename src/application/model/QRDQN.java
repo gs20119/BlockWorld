@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 import application.view.GameBoard;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.scene.layout.BorderPane;
 
 class Experience{ // S, A, R, nS
@@ -26,22 +27,32 @@ public class QRDQN {
 	int size, actions=4, maxBlock=2;
 	int supports=16, batch_size=500;
 	double gam=0.99, eps=0.05; // added action noise
+	GameBoard gb;
 	Random rand = new Random();
 	ArrayList<Experience> Replay = new ArrayList<Experience>();
 	int capacity = 5000;
 	
 	public QRDQN(int size, int maxBlock, BorderPane root, GameBoard gb) { 
 		this.size = size; this.maxBlock = maxBlock;
-		env = new Env(size, maxBlock); 
+		env = new Env(size, maxBlock); this.gb = gb;
 		NN = new QRNet(size*size*maxBlock, actions, supports, batch_size); 
 		Target = new QRNet(size*size*maxBlock, actions, supports, batch_size);
 	}
 	
 	public void start(int epochs) {
-		for(int i=0; i<epochs; i++) {
-			Target.copy(NN);
-			env.Reset(); env.Init(); epoch(i);
+		EpochThread[] t = new EpochThread[epochs];
+		t[0] = new EpochThread();
+		t[0].setDaemon(true); t[0].start();
+		for(int i=1; i<epochs; i++) {
+			while(t[i-1].isAlive()) { }
+			t[i] = new EpochThread();
+			t[i].setDaemon(true); t[i].start();
 		}
+		/*for(int i=0; i<epochs; i++) {
+			Target.copy(NN);
+			env.Reset(); env.Init();
+			epoch(i);
+		}*/
 	}
 	
 	public void ready() { Target.copy(NN); env.Reset(); env.Init();}
@@ -66,25 +77,50 @@ public class QRDQN {
 		}System.out.println("");
 	}
 	
-	public void epoch(int time) {
-		Thread thread = new Thread(() -> { 
-			while(true) {
-				int dead = step(time>100?1:0);
+	/*public void epoch(int time) {
+		while(true) {
+			int dead = step(time>100?1:0);
+			int[] Board = env.getState();
+				gb.setState(Board);
 				Platform.runLater(() -> {
-					
+					gb.showGameBoard();
+					System.out.println("일 하는 중");
 				});
+				try { Thread.sleep(1000); }
+				catch(InterruptedException e) {}
 				if(dead==1) break;
 			}
-		});
-		thread.setDaemon(true);
-		thread.start();
+		
 		//while(true) {
 		//	int dead = step(time>100?1:0);
 		//	if(dead==1) break;
 		//}
-	}
+	}*/
 	
-	private int step(int print) {
+
+	public class EpochThread extends Thread{ 
+		@Override
+		public void run() {
+			Target.copy(NN);
+			env.Reset(); env.Init();
+			System.out.println("스레드 시작");
+			while(true) {
+				int dead = step(0);
+				System.out.println(dead);
+				int[] Board = env.getState();
+				Platform.runLater(() -> {
+					gb.setState(Board);
+					gb.showGameBoard();
+				});
+				try { Thread.sleep(100); }
+				catch(Exception e) { }
+				if(dead==1) break;
+			}System.out.println("스레드 종료");
+		}
+	};
+
+	
+	int step(int print) {
 		double[] pState = env.getHotVec();
 		double[] zPred = NN.forward(pState);
 		int action = findBestAction(zPred); 
