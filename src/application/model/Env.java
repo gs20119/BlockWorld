@@ -46,7 +46,6 @@ public class Env {
 	}
 	
 	public void Reset() {
-		Show();
 		System.out.println(score);
 		System.out.println("Game Over : score - " + score +", time - " + time);
 		Mv = new int[cap]; Board = new int[cap];
