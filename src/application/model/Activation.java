@@ -20,6 +20,22 @@ class ReLU extends Activation {
 		for(int i=0; i<X.length; i++) dJdx[i]=dJdy[i]*dydx[i];
 		return dJdx;
 	}
+
+	//@Override
+	public double[][] batchforward(double[][] xbatch) {
+		Xbatch = new double[xbatch.length][xbatch[0].length];
+		for(int i=0; i<xbatch.length; i++) 
+			for(int j=0; j<xbatch[0].length; j++) Xbatch[i][j] = xbatch[i][j];
+		double[][] ybatch = new double[xbatch.length][];
+		for(int i=0; i<xbatch.length; i++) ybatch[i] = forward(Xbatch[i]);
+		return ybatch;
+	}
+
+	//@Override
+	public double[][] batchbackward(double[][] dJdy) {
+		
+		return null;
+	}
 	
 }
 
