@@ -21,24 +21,30 @@ class ReLU extends Activation {
 		return dJdx;
 	}
 
-	//@Override
+	@Override
 	public double[][] batchforward(double[][] xbatch) {
 		Xbatch = new double[xbatch.length][xbatch[0].length];
-		for(int i=0; i<xbatch.length; i++) 
-			for(int j=0; j<xbatch[0].length; j++) Xbatch[i][j] = xbatch[i][j];
-		double[][] ybatch = new double[xbatch.length][];
-		for(int i=0; i<xbatch.length; i++) ybatch[i] = forward(Xbatch[i]);
+		for(int i=0; i<Xbatch.length; i++) 
+			for(int j=0; j<Xbatch[0].length; j++) Xbatch[i][j] = xbatch[i][j];
+		double[][] ybatch = new double[Xbatch.length][];
+		for(int i=0; i<Xbatch.length; i++) ybatch[i] = forward(Xbatch[i]).clone();
 		return ybatch;
 	}
 
-	//@Override
+	@Override
 	public double[][] batchbackward(double[][] dJdy) {
-		
-		return null;
+		double[][] dJdx = new double[Xbatch.length][Xbatch[0].length];
+		double[][] dydx = new double[Xbatch.length][Xbatch[0].length];
+		for(int i=0; i<Xbatch.length; i++)
+			for(int j=0; j<Xbatch[0].length; j++) {
+				dydx[i][j]=(Xbatch[i][j]>0)?1:0;
+				dJdx[i][j]=dJdy[i][j]*dydx[i][j];
+		}return dJdx;
 	}
 	
 }
 
+/*
 class Sigmoid extends Activation {
 
 	private double sigm(double x){ return 1/(1+Math.exp(-x)); }
@@ -61,3 +67,4 @@ class Sigmoid extends Activation {
 	}
 	
 }
+*/

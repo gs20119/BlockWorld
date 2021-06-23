@@ -87,35 +87,122 @@ class FullConnect extends Layer{
 				W[i][j] = adam.update(W[i][j]);
 		}
 	}
+	@Override
+	public double[][] batchforward(double[][] xbatch) {
+		Xbatch = new double[xbatch.length][xbatch[0].length];
+		double[][] ybatch = new double[xbatch.length][Out+1];
+		for(int k=0; k<Xbatch.length; k++) ybatch[k][0]=1;
+		for(int i=0; i<Xbatch.length; i++) 
+			for(int j=0; j<Xbatch[0].length; j++) Xbatch[i][j] = xbatch[i][j];
+		for(int k=0; k<Xbatch.length; k++)
+			for(int i=0; i<=In; i++)
+				for(int j=1; j<=Out; j++) ybatch[k][j] += Xbatch[k][i]*W[i][j].w;
+		return ybatch;
+	}
+	
+	@Override
+	public double[][] batchbackward(double[][] dJdy) {
+		double[][] dJdx = new double[Xbatch.length][In+1];
+		for(int k=0; k<Xbatch.length; k++)
+			for(int i=0; i<=In; i++)
+				for(int j=1; j<=Out; j++) {
+					dJdx[k][i] += dJdy[k][j]*W[i][j].w;
+					W[i][j].grad += dJdy[k][j]*Xbatch[k][i];
+		}return dJdx;
+	}
 
 	
 }
 
 class BatchNormal extends Layer{
 	
-	private double beta, gamma;
-	@Override
-	public double[] forward(double[] x) {
-		// TODO Auto-generated method stub
-		return null;
+	private Weight beta, gamma;
+	private double eps = Math.pow(10,-6);
+	public BatchNormal() {
+		beta = new Weight(0.1);
+		gamma = new Weight(0.1);
 	}
-
-	@Override
-	public double[] backward(double[] dJdy) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
+	public double[] forward(double[] x) { return null; } // not defined
+	public double[] backward(double[] dJdy) { return null; }
 
 	@Override
 	public void optimize(int K) {
-		// TODO Auto-generated method stub
-		
+		adam.timeplus();
+		beta.grad /= K; gamma.grad /= K;
+		beta = adam.update(beta);
+		gamma = adam.update(gamma);
 	}
 	
 	@Override
 	public void copy(Layer L) {
-		// TODO Auto-generated method stub
+		BatchNormal B = (BatchNormal)L;
+		beta = new Weight(B.beta.w);
+		gamma = new Weight(B.gamma.w);
+	}
+
+	double[] mean, vari;
+	double[][] Xshift, Ybatch;
+
+	@Override
+	public double[][] batchforward(double[][] xbatch) {
 		
+		Xbatch = new double[xbatch.length][xbatch[0].length];
+		Xshift = new double[xbatch.length][xbatch[0].length];
+		Ybatch = new double[xbatch.length][xbatch[0].length];
+		mean = new double[Xbatch[0].length]; 
+		vari = new double[Xbatch[0].length];
+		
+		for(int i=0; i<Xbatch.length; i++)
+			for(int j=1; j<Xbatch[0].length; j++) Xbatch[i][j] = xbatch[i][j];
+		
+		for(int i=0; i<Xbatch.length; i++)
+			for(int j=1; j<Xbatch[0].length; j++) Xshift[i][j] = Xbatch[i][j];
+		
+		for(int i=1; i<Xbatch[0].length; i++)
+			for(int j=0; j<Xbatch.length; j++) mean[i] += Xbatch[j][i];
+		for(int i=1; i<Xbatch[0].length; i++) mean[i] /= Xbatch.length;
+		for(int i=1; i<Xbatch[0].length; i++)
+			for(int j=0; j<Xbatch.length; j++) Xshift[j][i] -= mean[i];
+		
+		for(int i=1; i<Xbatch[0].length; i++)
+			for(int j=0; j<Xbatch.length; j++) vari[i] += Math.pow(Xshift[j][i], 2);
+		for(int i=1; i<Xbatch[0].length; i++) vari[i] /= Xbatch.length;
+		
+		for(int i=1; i<Xbatch[0].length; i++)
+			for(int j=0; j<Xbatch.length; j++) Xshift[j][i] /= (vari[i]+eps);
+		
+		for(int i=0; i<Xbatch.length; i++)
+			for(int j=1; j<Xbatch[0].length; j++) 
+				Ybatch[i][j] = gamma.w*Xshift[i][j]+beta.w; 
+		
+		for(int i=0; i<Xbatch.length; i++) Ybatch[i][0]=1;
+		return Ybatch;
+	}
+
+	@Override
+	public double[][] batchbackward(double[][] dJdy) {
+		
+		beta.grad=0; gamma.grad=0;
+		double[][] dJdxs = new double[Xbatch.length][Xbatch[0].length];
+		double[] dJdm = new double[Xbatch[0].length];
+		double[] dJdv = new double[Xbatch[0].length];
+		double[][] dJdx = new double[Xbatch.length][Xbatch[0].length];
+		
+		for(int i=0; i<Xbatch.length; i++)
+			for(int j=1; j<Xbatch[0].length; j++) {
+				beta.grad += dJdy[i][j];
+				gamma.grad += Xshift[i][j]*dJdy[i][j];
+				dJdxs[i][j] = gamma.w*dJdy[i][j];
+				dJdv[j] += -0.5 * dJdxs[i][j] * (Xbatch[i][j]-mean[j]) 
+						* Math.pow(vari[j]+eps,-1.5);
+				dJdm[j] += -1 * dJdxs[i][j] / Math.sqrt(vari[j]+eps);
+				dJdx[i][j] = dJdxs[i][j] / Math.sqrt(vari[j]+eps)
+						+ dJdv[j] * 2 * (Xshift[i][j]-mean[j]) / Xbatch.length
+						+ dJdm[j] / Xbatch.length;
+		}
+		
+		return dJdx;
 	}
 	
 }

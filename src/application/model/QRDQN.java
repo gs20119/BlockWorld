@@ -39,26 +39,6 @@ public class QRDQN {
 		Target = new QRNet(size*size*maxBlock, actions, supports, batch_size);
 	}
 	
-	public void start(int epochs) {
-		EpochThread[] t = new EpochThread[epochs];
-		t[0] = new EpochThread();
-		t[0].setDaemon(true); t[0].start();
-		for(int i=1; i<epochs; i++) {
-			while(t[i-1].isAlive()) { }
-			t[i] = new EpochThread();
-			t[i].setDaemon(true); t[i].start();
-		}
-		/*for(int i=0; i<epochs; i++) {
-			Target.copy(NN);
-			env.Reset(); env.Init();
-			epoch(i);
-		}*/
-	}
-	
-	public void ready() { Target.copy(NN); env.Reset(); env.Init();}
-	
-	public int[] getState() { return env.getState(); }
-	
 	private int findBestAction(double[] zPred) {
 		double maxQ=-1000; int action=-1; 
 		for(int i=0; i<actions; i++) {
@@ -77,50 +57,42 @@ public class QRDQN {
 		}System.out.println("");
 	}
 	
-	/*public void epoch(int time) {
-		while(true) {
-			int dead = step(time>100?1:0);
-			int[] Board = env.getState();
-				gb.setState(Board);
-				Platform.runLater(() -> {
-					gb.showGameBoard();
-					System.out.println("일 하는 중");
-				});
-				try { Thread.sleep(1000); }
-				catch(InterruptedException e) {}
-				if(dead==1) break;
-			}
-		
-		//while(true) {
-		//	int dead = step(time>100?1:0);
-		//	if(dead==1) break;
-		//}
-	}*/
+	public void start(int epochs) {
+		EpochThread t = new EpochThread(epochs);
+		t.setDaemon(true); t.start();
+	}
 	
-
-	public class EpochThread extends Thread{ 
+	public class EpochThread extends Thread{ 	
+		
+		int epochs;
+		public EpochThread(int epochs) {
+			this.epochs = epochs;
+		}
+		
 		@Override
 		public void run() {
-			Target.copy(NN);
-			env.Reset(); env.Init();
-			System.out.println("스레드 시작");
-			while(true) {
-				int dead = step(0);
-				System.out.println(dead);
-				int[] Board = env.getState();
-				Platform.runLater(() -> {
-					gb.setState(Board);
-					gb.showGameBoard();
-				});
-				try { Thread.sleep(100); }
-				catch(Exception e) { }
-				if(dead==1) break;
-			}System.out.println("스레드 종료");
+			for(int i=0; i<epochs; i++) {
+				Target.copy(NN);
+				env.Reset(); env.Init();
+				System.out.println("스레드 시작");
+				while(true) {
+					int dead = step(0);
+					int[] Board = env.getState();
+					Platform.runLater(() -> {
+						gb.setState(Board);
+						gb.showGameBoard();
+					});
+					try { Thread.sleep(1); }
+					catch(Exception e) { }
+					if(dead==1) break;
+				}System.out.println("스레드 종료");
+			}
 		}
 	};
 
 	
 	int step(int print) {
+		
 		double[] pState = env.getHotVec();
 		double[] zPred = NN.forward(pState);
 		int action = findBestAction(zPred); 
@@ -140,8 +112,8 @@ public class QRDQN {
 		
 		if(Replay.size() > capacity) Replay.remove(0);			
 		if(Replay.size() > batch_size) train(); 
-		if(dead==1) return 1;
-		return 0;
+		if(dead==1) return 1; return 0;
+		
 	}
 	
 	private void train() {

@@ -5,6 +5,6 @@ public abstract class Function {
 	double[][] Xbatch;
 	public abstract double[] forward(double[] x);
 	public abstract double[] backward(double[] dJdy);
-	//public abstract double[][] batchforward(double[][] xbatch);
-	//public abstract double[][] batchbackward(double[][] dJdybatch);
+	public abstract double[][] batchforward(double[][] xbatch);
+	public abstract double[][] batchbackward(double[][] dJdybatch);
 }

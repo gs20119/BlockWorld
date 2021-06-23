@@ -37,8 +37,8 @@ public class Block {
 
 	public void showBlock() {	
 		rect.setFill(bc.getColor());
-		if(num==0) return;
-		text.setText(num+"");
+		if(num==0) text.setText("");
+		else text.setText(num+"");
 		text.setFill(tc.getColor());   // text color
         text.setFont(Font.font("Arial", FontWeight.BOLD, 25));
         double fontX=text.getLayoutBounds().getWidth();
