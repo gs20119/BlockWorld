@@ -26,7 +26,7 @@ public class QRDQN {
 	QRNet NN, Target;
 	int size, actions=4, maxBlock=2;
 	int supports=16, batch_size=500;
-	double gam=0.99, eps=0.05; // added action noise
+	double gam=0.99, eps=0.01; // added action noise
 	GameBoard gb;
 	Random rand = new Random();
 	ArrayList<Experience> Replay = new ArrayList<Experience>();
@@ -40,7 +40,7 @@ public class QRDQN {
 	}
 	
 	private int findBestAction(double[] zPred) {
-		double maxQ=-1000; int action=-1; 
+		double maxQ=-10000000; int action=-1; 
 		for(int i=0; i<actions; i++) {
 			double qPred=0;
 			for(int j=1; j<=supports; j++) qPred += zPred[i*supports+j];
@@ -74,9 +74,8 @@ public class QRDQN {
 			for(int i=0; i<epochs; i++) {
 				Target.copy(NN);
 				env.Reset(); env.Init();
-				System.out.println("스레드 시작");
 				while(true) {
-					int dead = step(0);
+					int dead = step((i>100)?1:0);
 					int[] Board = env.getState();
 					Platform.runLater(() -> {
 						gb.setState(Board);
@@ -85,7 +84,7 @@ public class QRDQN {
 					try { Thread.sleep(1); }
 					catch(Exception e) { }
 					if(dead==1) break;
-				}System.out.println("스레드 종료");
+				}
 			}
 		}
 	};
@@ -97,7 +96,7 @@ public class QRDQN {
 		double[] zPred = NN.forward(pState);
 		int action = findBestAction(zPred); 
 		if(Math.random()<eps) action = Math.abs(rand.nextInt())%actions; // exploration
-		if(print==1) printQ(zPred);
+		if(print>=1) printQ(zPred); print=0;
 		
 		env.Move(action,print);
 		if(env.notMoved()!=0) {
@@ -131,7 +130,7 @@ public class QRDQN {
 			if(e.d==0) {
 				int nA = findBestAction(zTarg);
 				for(int j=1; j<=supports; j++) zTargi[j] += gam*zTarg[j+supports*nA];
-			}NN.forward(e.S); // we have to train Z(S,A)
+			}//NN.forward(e.S); // we have to train Z(S,A)
 			meanLoss += NN.backward(zPredi, zTargi, e.A);
 		}NN.optimize(); 
 		if(env.Terminal()!=0) System.out.println("Average Loss : "+meanLoss/batch_size);

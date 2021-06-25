@@ -8,3 +8,5 @@ public abstract class Function {
 	public abstract double[][] batchforward(double[][] xbatch);
 	public abstract double[][] batchbackward(double[][] dJdybatch);
 }
+
+

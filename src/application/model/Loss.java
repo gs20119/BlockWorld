@@ -44,6 +44,7 @@ class QuantHuberLoss extends Loss{
 	public double getLoss(double[] pred, double[] targ) { // Error of Z(s,a) = N Supports
 		Pred = pred.clone(); Targ = targ.clone();
 		double Loss = 0;
+		//for(int i=1; i<=N; i++) Loss += 0.001*Math.pow(Pred[i],2);
 		for(int i=1; i<=N; i++)
 			for(int j=1; j<=N; j++) {
 				ErrorMatrix[i][j] = Targ[j]-Pred[i];
@@ -55,12 +56,14 @@ class QuantHuberLoss extends Loss{
 	@Override
 	public double[] backward() {
 		double[] dJdP = new double[N+1];
+		double Reg=0;
+		//for(int i=1; i<=N; i++) Reg += 0.002*Pred[i];
 		for(int i=1; i<=N; i++)
 			for(int j=1; j<=N; j++) {
 				double E = ErrorMatrix[i][j];
 				if(Math.abs(E)>1) dJdP[i] += ((E>0)?-Quantiles[i]:1-Quantiles[i]);
-				else dJdP[i] += -E*((E>0)?Quantiles[i]:(1-Quantiles[i]));
-		}for(int i=1; i<=N; i++) dJdP[i] /= N;
+				else dJdP[i] += 2*E*((E>0)?Quantiles[i]:(1-Quantiles[i]));
+		}for(int i=1; i<=N; i++) dJdP[i] = (dJdP[i]+Reg)/N;
 		return dJdP;
 	}
 	

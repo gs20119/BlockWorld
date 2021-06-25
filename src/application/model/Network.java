@@ -23,7 +23,7 @@ public abstract class Network {
 	}
 	
 	public void copy(Network NN) {
-		for(int i=0; i<=NN.depth; i++)
+		for(int i=0; i<NN.layers.length; i++)
 			layers[i].copy(NN.layers[i]);
 	}
 	
@@ -117,32 +117,28 @@ class SimpleBatch extends Network {
 	public SimpleBatch(int input, int b) {
 		this.input_size = input;
 		this.batch_size = b; depth = 3;
-		layers = new Layer[7]; activs = new Activation[3];
+		layers = new Layer[5]; activs = new Activation[3];
 		layers[0] = new FullConnect(input_size,64);
-		layers[1] = new BatchNormal();
 		activs[0] = new ReLU();
-		layers[2] = new FullConnect(64,64);
-		layers[3] = new BatchNormal();
+		layers[1] = new FullConnect(64,64);
+		layers[2] = new BatchNormal();
 		activs[1] = new ReLU();
-		layers[4] = new FullConnect(64,64);
-		layers[5] = new BatchNormal();
+		layers[3] = new FullConnect(64,64);
 		activs[2] = new ReLU();
-		layers[6] = new FullConnect(64,1);
+		layers[4] = new FullConnect(64,1);
 		J = new MSELoss();
 	}
 	
 	@Override
 	public double[][] forward(double[][] x){
 		x = layers[0].batchforward(x); 
-		x = layers[1].batchforward(x);
 		x = activs[0].batchforward(x);
-		x = layers[2].batchforward(x); 
-		x = layers[3].batchforward(x);
+		x = layers[1].batchforward(x); 
+		x = layers[2].batchforward(x);
 		x = activs[1].batchforward(x);
-		x = layers[4].batchforward(x);
-		x = layers[5].batchforward(x);
+		x = layers[3].batchforward(x);
 		x = activs[2].batchforward(x);
-		x = layers[6].batchforward(x);
+		x = layers[4].batchforward(x);
 		return x;
 	}
 	
@@ -152,17 +148,16 @@ class SimpleBatch extends Network {
 		for(int k=0; k<pred.length; k++) {
 			J.getLoss(pred[k], targ[k]);
 			dJdx[k] = J.backward();
-		}dJdx = layers[6].batchbackward(dJdx); 
+		}dJdx = layers[4].batchbackward(dJdx); 
 		dJdx = activs[2].batchbackward(dJdx);
-		dJdx = layers[5].batchbackward(dJdx);
-		dJdx = layers[4].batchbackward(dJdx);
-		dJdx = activs[1].batchbackward(dJdx);
 		dJdx = layers[3].batchbackward(dJdx);
+		dJdx = activs[1].batchbackward(dJdx);
 		dJdx = layers[2].batchbackward(dJdx);
-		dJdx = activs[0].batchbackward(dJdx);
 		dJdx = layers[1].batchbackward(dJdx);
+		dJdx = activs[0].batchbackward(dJdx);
 		dJdx = layers[0].batchbackward(dJdx);
 	}
+	
 	
 }
 

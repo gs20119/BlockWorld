@@ -14,7 +14,7 @@ public class Env {
 	private int size=4, cap=16, Max=15;
 	private int time=0, score=0, Advntge=0, MaxRec=0;
 	private static int genMax=2;
-	private static double pa=1, pb=0.2, pc=-0.2;
+	private static double pa=0.02, pb=0.01, pc=-0.01;
 	private static String[] Actions = {"LEFT", "UP", "RIGHT", "DOWN"};
 	Random rand = new Random();
 	
@@ -111,11 +111,14 @@ public class Env {
 	
 	public double getReward() {
 		double mvPenalty=0, stageScore=0;
+		if(Terminal()!=0) return -0.1;
+		if(subTerminal()!=0) return -0.05;
 		//for(int i=0; i<cap; i++) stageScore += Board[i]; it was a problem
 		for(int i=0; i<cap; i++) if(Board[i]==0) stageScore++; 
 		for(int i=0; i<cap; i++) if(Mv[i]!=0) mvPenalty++;
-		//if(mvPenalty==0) mvPenalty += 10; // it means invalid movement
-		return Advntge*pa + stageScore*pb + mvPenalty*pc;
+		double Reward = Advntge*pa+stageScore*pb+mvPenalty*pc;
+		System.out.println("Reward : " + Reward);
+		return Reward;
 	}
 	
 }

@@ -4,7 +4,7 @@ public class BatchNetTest {
 
 	public static void main(String[] args) {
 		int batch_size = 500, optAttempt=20000;
-		Network NN = new SimpleNet(1,batch_size);
+		Network NN = new SimpleBatch(1,batch_size);
 		double[][][] DataSet = new double[300][500][2];
 		double[][][] Target = new double[300][500][2];
 		
@@ -17,7 +17,7 @@ public class BatchNetTest {
 		}
 		
 		
-		for(int K=0; K<50; K++) { // 50 epochs
+		for(int K=0; K<10; K++) { // 50 epochs
 			for(int k=0; k<300; k++) { // 300 mini-batches
 				double[][] pred = NN.forward(DataSet[k]);
 				double MSELoss = 0;
@@ -37,9 +37,9 @@ public class BatchNetTest {
 			TestY[i][0] = 1; TestY[i][1] = 0.2*Math.pow(TestX[i][1],3) - Math.pow(TestX[i][1],2) - 2*TestX[i][1] + 1;
 		}
 		
+		double[][] pred = NN.forward(TestX);
 		for(int i=0; i<200; i++) {
-			double[] pred = NN.forward(TestX[i]);
-			System.out.println("("+TestX[i][1]+","+pred[1]+")");
+			System.out.println("("+TestX[i][1]+","+pred[i][1]+")");
 		}
 		
 	}

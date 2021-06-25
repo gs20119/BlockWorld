@@ -19,7 +19,7 @@ class Weight {
 
 class Adam {
 	public static double b1=0.9, b2=0.999;
-	public static double alpha=Math.pow(10,-4), eps=Math.pow(10,-6);
+	public static double alpha=Math.pow(10,-4), eps=Math.pow(10,-8);
 	public double b1n, b2n;
 	public void timeplus() { b1n *= b1; b2n *= b2; }
 	public Adam() { b1n = 1; b2n = 1; }
@@ -117,10 +117,10 @@ class FullConnect extends Layer{
 class BatchNormal extends Layer{
 	
 	private Weight beta, gamma;
-	private double eps = Math.pow(10,-6);
+	private double eps = Math.pow(10,-8);
 	public BatchNormal() {
-		beta = new Weight(0.1);
-		gamma = new Weight(0.1);
+		beta = new Weight(He());
+		gamma = new Weight(He());
 	}
 	
 	public double[] forward(double[] x) { return null; } // not defined
@@ -193,11 +193,10 @@ class BatchNormal extends Layer{
 			for(int j=1; j<Xbatch[0].length; j++) {
 				beta.grad += dJdy[i][j];
 				gamma.grad += Xshift[i][j]*dJdy[i][j];
-				dJdxs[i][j] = gamma.w*dJdy[i][j];
-				dJdv[j] += -0.5 * dJdxs[i][j] * (Xbatch[i][j]-mean[j]) 
-						* Math.pow(vari[j]+eps,-1.5);
+				dJdxs[i][j] += gamma.w*dJdy[i][j];
+				dJdv[j] += -0.5 * dJdxs[i][j] * (Xbatch[i][j]-mean[j]) * Math.pow(vari[j]+eps,-1.5);
 				dJdm[j] += -1 * dJdxs[i][j] / Math.sqrt(vari[j]+eps);
-				dJdx[i][j] = dJdxs[i][j] / Math.sqrt(vari[j]+eps)
+				dJdx[i][j] += dJdxs[i][j] / Math.sqrt(vari[j]+eps)
 						+ dJdv[j] * 2 * (Xshift[i][j]-mean[j]) / Xbatch.length
 						+ dJdm[j] / Xbatch.length;
 		}
